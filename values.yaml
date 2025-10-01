@@ -1,0 +1,193 @@
+# Default values for metax-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+registry:   cr.metax-tech.com/cloud
+pullPolicy: IfNotPresent
+
+log:
+  dir:          /var/log/metax
+  level:        info
+  format:       json
+  rotationTime: 1w
+  maxAge:       26w
+
+controller:
+  replicaCount: 1
+  name: operator-controller
+  nameOverride: ""
+  fullnameOverride: ""
+  imagePullSecrets: []
+  podAnnotations: {}
+  tolerations:
+  - key: "node-role.kubernetes.io/master"
+    operator: "Equal"
+    value: ""
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Equal"
+    value: ""
+    effect: "NoSchedule"
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: "node-role.kubernetes.io/master"
+            operator: In
+            values: [""]
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: In
+            values: [""]
+  podSecurityContext: {}
+  securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  nodeSelector: {}
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "metax-operator"
+
+# label generator config
+gpuLabel:
+  log:
+
+
+# kernel module driver config
+driver:
+  deployPolicy: "PreferCloud"
+  # fw upgrade
+  fwUpgradePolicy: "Never"
+  fwEnableVirt: false
+  deviceAsRootGroup: false
+  upgradePolicy:
+    enableRollout: false
+    upgradeSteps:
+    - replicas: 1
+      pauseDuration: 30000
+    - replicas: 100%
+    pause: false
+    maxParallel: 100%
+    maxUnavailable: 0%
+    maxFailureThreshold: 5
+    Fallback: pause
+  # payload contains the KMD package
+  payload:
+    name: "driver-image"
+    version: "2.33.0.9-amd64"
+  vfnumsConfig:
+    nodes:
+      sample-node:
+        vfnum: 4
+      sample-node2:
+        vfnum: 2
+  moduleParams:
+  nodeModuleParams:
+  log:
+  # please modify vfio config before using
+  vfioConfig:
+    - nodeName: worker-node1
+      gpus: ""
+  driverConfig:
+
+# maca config
+maca:
+  # payload contains the UMD package
+  payload:
+    registry: cr.metax-tech.com/library
+    images:
+    - "maca-c500:2.33.0.6-ubuntu20.04-amd64" # DEFAULT_MACA_VERSION
+  cleanupConfig:
+    threshold: 5
+    #policy: Never/OlderVersionFirst/OlderTimestampFirst
+    cleanupPolicy: Never
+  log:
+
+# container runtime config
+runtime:
+  log:
+
+# device plugin config
+gpuDevice:
+  healthyInterval: 5
+  connectDetectPeriod: 0s
+  sGPUHybridMode: false
+  log:
+
+# data exporter config
+dataExporter:
+  deploy: false
+  service:
+    type: ClusterIP
+    port: 30445
+
+topoDiscovery:
+  deploy: false
+  # config/dragonfly/switchbox
+  mode: "config"
+  dragonfly:
+    nodeNumber: 2
+    enableTraining: false
+  switchbox:
+    clusterManagerAddress:
+    clusterManagerUser:
+    clusterManagerPassword:
+    clusterManagerPollTopoPeriod: 30
+    clusterManagerPollEventPeriod: 10
+    # internal dragonfly
+    nodeNumber: 2
+    enableTraining: false
+  rpcServerPort: 10001
+  master:
+    serverPort: 9001
+    log:
+    env:
+    podTemplateSpec:
+      spec:
+        tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Equal"
+          value: ""
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Equal"
+          value: ""
+          effect: "NoSchedule"
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: "node-role.kubernetes.io/master"
+                  operator: In
+                  values: [""]
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: "node-role.kubernetes.io/control-plane"
+                  operator: In
+                  values: [""]
+  worker:
+    metricsPort: 9002
+    log:
+
+gpuScheduler:
+  deploy: false
+  kubeScheduler:
+    image:
+      registry: "registry.k8s.io"
+  gpuAware:
