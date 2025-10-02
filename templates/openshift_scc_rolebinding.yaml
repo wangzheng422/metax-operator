@@ -11,4 +11,7 @@ subjects:
 - kind: ServiceAccount
   name: {{ include "metax-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
+- kind: ServiceAccount
+  name: metax-gpu-device
+  namespace: {{ .Release.Namespace }}
 {{- end }}

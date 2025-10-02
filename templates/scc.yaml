@@ -27,5 +27,4 @@ supplementalGroups:
   type: RunAsAny
 volumes:
 - '*'
-users: []
 {{- end }}
